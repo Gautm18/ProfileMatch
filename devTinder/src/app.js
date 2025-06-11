@@ -6,12 +6,10 @@ const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validator");
 var cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
-const {userAuth} = require("./middlewares/auth")
+const { userAuth } = require("./middlewares/auth");
 
 app.use(express.json());
 app.use(cookieParser());
-
-
 
 app.post("/signup", async (req, res) => {
   const { firstName, lastName, emailId, password } = req.body;
@@ -34,9 +32,6 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-
-
-
 app.post("/login", async (req, res) => {
   const { emailId, password } = req.body;
 
@@ -51,46 +46,38 @@ app.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Invalid credentials." });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await user.validatePassword(password);
 
     if (!isMatch) {
       return res.status(400).json({ error: "Invalid credentials." });
     }
-      const token = await jwt.sign({ _id: user._id }, "Dev@Tinder");
-      res.cookie("token", token);
+    const token = await user.getJWT();
+    res.cookie("token", token);
 
-      res.status(200).json({ message: "Login successful!" });
+    res.status(200).json({ message: "Login successful!" });
   } catch (e) {
     console.error("Login error:", e);
     res.status(500).json({ error: "Server error: " + e.message });
   }
-
 });
 
+app.get("/profile", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
 
-
-app.get("/profile", userAuth,  async(req, res) => {
-
-  try{
-
-    const user = req.user
-  
-  console.log(user.firstName)
-  console.log(token);
-  res.send(user);
-  }
-  catch(e){
-    res.status(404).send( e)
+    console.log(user.firstName);
+    res.send(user);
+  } catch (e) {
+    res.status(404).send(e);
   }
 });
 
-
-app.post("/sendConnectionRequest", userAuth, async(req,res)=>{
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
   const user = req.user;
   console.log("connection request sent");
 
-  res.send(user.firstName + " sent the connection request!!")
-})
+  res.send(user.firstName + " sent the connection request!!");
+});
 
 connectDB()
   .then(() => {
