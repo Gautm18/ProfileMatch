@@ -1,5 +1,9 @@
 const express = require("express");
 const authRouter = express.Router();
+const { validateSignUpData } = require("../utils/validator");
+const bcrypt = require("bcrypt");
+const User = require("../models/user");
+const jwt = require("jsonwebtoken");
 
 authRouter.post("/signup", async (req, res) => {
   const { firstName, lastName, emailId, password } = req.body;
@@ -50,3 +54,6 @@ authRouter.post("/login", async (req, res) => {
       res.status(500).json({ error: "Server error: " + e.message });
     }
   });
+
+
+  module.exports = authRouter
