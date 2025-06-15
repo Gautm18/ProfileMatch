@@ -27,33 +27,39 @@ authRouter.post("/signup", async (req, res) => {
 });
 
 authRouter.post("/login", async (req, res) => {
-    const { emailId, password } = req.body;
-  
-    if (!emailId || !password) {
-      return res.status(400).json({ error: "Email and password are required." });
+  const { emailId, password } = req.body;
+
+  if (!emailId || !password) {
+    return res.status(400).json({ error: "Email and password are required." });
+  }
+
+  try {
+    const user = await User.findOne({ emailId: emailId });
+
+    if (!user) {
+      return res.status(400).json({ error: "Invalid credentials." });
     }
-  
-    try {
-      const user = await User.findOne({ emailId: emailId });
-  
-      if (!user) {
-        return res.status(400).json({ error: "Invalid credentials." });
-      }
-  
-      const isMatch = await user.validatePassword(password);
-  
-      if (!isMatch) {
-        return res.status(400).json({ error: "Invalid credentials." });
-      }
-      const token = await user.getJWT();
-      res.cookie("token", token);
-  
-      res.status(200).json({ message: "Login successful!" });
-    } catch (e) {
-      console.error("Login error:", e);
-      res.status(500).json({ error: "Server error: " + e.message });
+
+    const isMatch = await user.validatePassword(password);
+
+    if (!isMatch) {
+      return res.status(400).json({ error: "Invalid credentials." });
     }
+    const token = await user.getJWT();
+    res.cookie("token", token);
+
+    res.status(200).json({ message: "Login successful!" });
+  } catch (e) {
+    console.error("Login error:", e);
+    res.status(500).json({ error: "Server error: " + e.message });
+  }
+});
+
+authRouter.post("/logout", async (req, res) => {
+  res.cookie("token", null, {
+    expires: new Date(Date.now()),
   });
+  res.send("you logged out successfully!");
+});
 
-
-  module.exports = authRouter
+module.exports = authRouter;
